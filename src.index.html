@@ -1,44 +1,47 @@
+<script>
+    // PASTE YOUR SCRIPT.JS CODE HERE
+    const flame = document.getElementById('flame-group');
+    const candleDiv = document.getElementById('candle-div');
+    const btn = document.getElementById('startBtn');
+    const statusText = document.getElementById('status');
+    const bdayMsg = document.getElementById('birthday-message');
+    <div id="birthday-message" style="display: none;">
+    <h1>Happy Birthday!</h1>
+    <img id="bday-photo" src="lavaaaaaa05.jpeg" alt="Happy Birthday Photo">
+</div>
 
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Birthday Candle Surprise</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    btn.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            btn.style.display = 'none';
+            statusText.innerText = "Blow on your microphone now!";
 
-    <div class="container">
-        <!-- THE CANDLE SECTION -->
-        <div id="candle-div">
-            <div class="candle">
-                <div id="flame-group" class="flame-wrapper">
-                    <div class="flame-main"></div>
-                </div>
-                <div class="wick"></div>
-            </div>
-        </div>
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        <!-- THE BIRTHDAY SECTION -->
-        <div id="birthday-message">
-            <!-- Ensure your image is in the same folder and named photo.jpg -->
-            <img id="bday-photo" src="lavaaaaaa05.jpeg" alt="Happy Birthday Photo">
-            <h1>✨ Happy Birthday! ✨</h1>
-            <p>Make a wish come true.</p>
-        </div>
+            function detectBlow() {
+                analyser.getByteFrequencyData(dataArray);
+                let volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
-        <p id="status">Ready to celebrate?</p>
-        <button id="startBtn">LIGHT THE CANDLE</button>
-    </div>
+                if (volume > 55) { 
+                    candleDiv.style.display = 'none';
+                    statusText.style.display = 'none';
+                    bdayMsg.style.display = 'block';
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    return; 
+                }
+                requestAnimationFrame(detectBlow);
+            }
+            detectBlow();
+        } catch (err) {
+            alert("Microphone access is required!");
+        }
+    });
+</script>
 
-    <script src="script.js"></script>
-</body>
-</html>
-<script src="./script.js"></script>
-<!-- ... rest of your HTML ... -->
-    <script>
-        const flame = document.getElementById('flame-group');
-        // ... all the rest of your javascript code goes here ...
-    </script>
-</body>
-</html>
