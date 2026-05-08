@@ -1,0 +1,39 @@
+const flame = document.getElementById('flame-group');
+const candleDiv = document.getElementById('candle-div');
+const btn = document.getElementById('startBtn');
+const statusText = document.getElementById('status');
+const bdayMsg = document.getElementById('birthday-message');
+
+btn.addEventListener('click', async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        btn.style.display = 'none';
+        statusText.innerText = "Blow on your microphone now!";
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        function detectBlow() {
+            analyser.getByteFrequencyData(dataArray);
+            let volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+            if (volume > 55) { 
+                candleDiv.style.display = 'none';
+                statusText.style.display = 'none';
+                bdayMsg.style.display = 'block';
+                
+                stream.getTracks().forEach(track => track.stop());
+                return; 
+            }
+            requestAnimationFrame(detectBlow);
+        }
+        detectBlow();
+    } catch (err) {
+        alert("Microphone access is required!");
+    }
+});
